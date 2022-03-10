@@ -1,30 +1,29 @@
 package blog_db
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
+
+	"github.com/jinzhu/gorm"
 )
 
-var client *sql.DB
+var db *gorm.DB
+var err error
 
 func Init() {
 	driverName := "mysql"
 	user := os.Getenv("SAMPLE_BLOG_DB_USER")
 	pass := os.Getenv("SAMPLE_BLOG_DB_PASS")
 	dbName := "sample_blog"
-	dataSourceName := user + ":" + pass + "@tcp(db-container:3306)/" + dbName
-	var err error
-	client, err = sql.Open(driverName, dataSourceName)
-	// client, err = ent.Open(driverName, fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-	//	"db-container", "3306", user, dbName, pass))
+	dataSourceName := user + ":" + pass + "@tcp(db-container:3306)/" + dbName + "?parseTime=True&loc=Asia%2FTokyo"
+	db, err = gorm.Open(driverName, dataSourceName)
 
 	if err != nil {
 		fmt.Println("error connecting to database:", err)
 	}
-	fmt.Println("connect to DB by ent")
+	fmt.Println("connect to DB using gorm")
 }
 
-func Connect() *sql.DB {
-	return client
+func Connect() (*gorm.DB, error) {
+	return db, err
 }
