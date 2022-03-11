@@ -3,11 +3,11 @@ package model
 import "time"
 
 type Entry struct {
-	ID          string `gorm:"primary_key"`
-	Uuid        string
-	Title       string
-	Description string
-	Body        string
-	Created     time.Time `gorm:"autoCreateTime"`
-	Updated     time.Time `gorm:"autoUpdateTime"`
+	Id          string    `json:"id"`
+	Uuid        string    `json:"uuid"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Body        string    `json:"body"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }

@@ -1,18 +1,30 @@
 package controller
 
 import (
+	"database/sql"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"sample_blog/blog_db"
 	"sample_blog/model"
+	"strconv"
 
 	"github.com/labstack/echo"
 )
 
 func GetEntryList() echo.HandlerFunc {
-	// TODO ent を使って entries から一覧を取得
 	return func(c echo.Context) error {
-		return c.String(http.StatusOK, "Entry list")
+		limit := c.Param("limit")
+		offset := c.Param("offset")
+		limitInt, _ := strconv.Atoi(limit)
+		offsetInt, _ := strconv.Atoi(offset)
+		entries, err := SelectEntries(limitInt, offsetInt)
+		if err != nil {
+			fmt.Println("failed to get entries", err)
+		}
+		entriesJson, _ := json.Marshal(entries)
+		return c.String(http.StatusOK, string(entriesJson))
 	}
 }
 
@@ -23,7 +35,8 @@ func GetEntryByUuId() echo.HandlerFunc {
 		if error != nil {
 			return c.String(http.StatusBadRequest, "Failed to connect to DB")
 		}
-		return c.String(http.StatusOK, "Entry by Uuid "+entry.Uuid)
+		entryJson, _ := json.Marshal(entry)
+		return c.String(http.StatusOK, string(entryJson))
 	}
 }
 
@@ -33,22 +46,45 @@ func SelectEntryWithUuid(uuid string) (model.Entry, error) {
 	if err != nil {
 		return model.Entry{}, errors.New("failed to connect to DB")
 	}
-	result := db.First(&entry, "uuid = ?", uuid)
-	if result.RowsAffected == 0 {
-		return model.Entry{}, errors.New("entry data not found")
+	// result := db.First(&entry, "uuid = ?", uuid)
+	row := db.QueryRow("SELECT * FROM entries WHERE uuid = ?", uuid)
+	if err := row.Scan(&entry.Id, &entry.Uuid, &entry.Title,
+		model.SkippedScanner{}, model.SkippedScanner{}, model.SkippedScanner{}, model.SkippedScanner{}); err != nil {
+		if err == sql.ErrNoRows {
+			return entry, fmt.Errorf("SelectEntryWithUuid %v: not found", uuid)
+		}
+		return entry, fmt.Errorf("SelectEntryWithUuid %v: %v", uuid, err)
 	}
 	return entry, nil
 }
 
-func SelectEntries() (model.Entry, error) {
-	var entries model.Entry
+func SelectEntries(limit, offset int) ([]model.Entry, error) {
+	var entries []model.Entry
+	if limit == 0 {
+		limit = 40
+	}
 	db, err := blog_db.Connect()
 	if err != nil {
-		return model.Entry{}, errors.New("failed to connect to DB")
+		return entries, errors.New("failed to connect to DB")
 	}
-	result := db.Find(&entries)
-	if result.RowsAffected == 0 {
-		return model.Entry{}, errors.New("entry data not found")
+	// db.Limit(limit).Offset(offset).Find(&entries)
+
+	rows, err := db.Query("SELECT * FROM entries LIMIT ? OFFSET ?", limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("SelectEntries %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var entry model.Entry
+		if err := rows.Scan(&entry.Id, &entry.Uuid, &entry.Title,
+			model.SkippedScanner{}, model.SkippedScanner{}, model.SkippedScanner{}, model.SkippedScanner{}); err != nil {
+			return nil, fmt.Errorf("SelectEntries %v", err)
+		}
+		entries = append(entries, entry)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("SelectEntries %v", err)
 	}
 	return entries, nil
 }
