@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"sample_blog/blog_db"
-	"sample_blog/job"
-	"sample_blog/router"
 	"time"
 
 	"github.com/bamzi/jobrunner"
-	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/kohitsujijess/sample_blog/blog_db"
+	"github.com/kohitsujijess/sample_blog/job"
+	"github.com/kohitsujijess/sample_blog/models"
+	"github.com/kohitsujijess/sample_blog/router"
 )
 
 type GetEntries struct {
@@ -23,8 +24,12 @@ func main() {
 	db, err := blog_db.Connect()
 	if err != nil {
 		fmt.Println("Failed to connect to DB")
+	} else {
+		fmt.Println("Connected to DB")
 	}
-	db.Close()
+	fmt.Println(db)
+	db.AutoMigrate(&models.Entry{})
+
 	jobrunner.Start()
 	jobrunner.Schedule("@every 5m", GetEntries{})
 

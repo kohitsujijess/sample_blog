@@ -1,23 +1,21 @@
 package blog_db
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"time"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-var db *sql.DB
-var err error
-
-func Connect() (*sql.DB, error) {
-	driverName := "mysql"
+func Connect() (*gorm.DB, error) {
 	user := os.Getenv("SAMPLE_BLOG_DB_USER")
 	pass := os.Getenv("SAMPLE_BLOG_DB_PASS")
 	protocol := "tcp(db-container:3306)"
 	dbName := "sample_blog"
-	dataSourceName := user + ":" + pass + "@" + protocol + "/" + dbName + "?parseTime=True&loc=Asia%2FTokyo"
-	db, err = sql.Open(driverName, dataSourceName)
+	dataSourceName := user + ":" + pass + "@" + protocol + "/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
 	count := 0
 	if err != nil {
 		for {
@@ -29,10 +27,10 @@ func Connect() (*sql.DB, error) {
 			if count > 120 {
 				fmt.Println("failed to connect to DB:", err)
 			}
-			db, err = sql.Open(driverName, dataSourceName)
+			db, err = gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
 		}
 	} else {
-		fmt.Println("connect to DB using sql")
+		fmt.Println("connect to DB using gorm")
 	}
 	return db, err
 }
