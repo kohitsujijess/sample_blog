@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -19,7 +18,8 @@ func GetEntryList(c echo.Context) error {
 	offset := c.Param("offset")
 	limitInt, _ := strconv.Atoi(limit)
 	offsetInt, _ := strconv.Atoi(offset)
-	entries, err := SelectEntries(limitInt, offsetInt)
+	db, _ := blog_db.Connect()
+	entries, err := models.SelectEntries(db, limitInt, offsetInt)
 	if err != nil {
 		fmt.Println("failed to get entries", err)
 	}
@@ -36,17 +36,4 @@ func GetEntryById(c echo.Context) error {
 	}
 	entryJson, _ := json.Marshal(entry)
 	return c.String(http.StatusOK, string(entryJson))
-}
-
-func SelectEntries(limit, offset int) ([]models.Entry, error) {
-	var entries []models.Entry
-	if limit == 0 {
-		limit = 40
-	}
-	db, err := blog_db.Connect()
-	if err != nil {
-		return entries, errors.New("failed to connect to DB")
-	}
-	db.Limit(limit).Offset(offset).Find(&entries)
-	return entries, nil
 }

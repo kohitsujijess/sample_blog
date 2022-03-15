@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # env_file: .env
+    env_file: .env
     command: /bin/sh -c "go run main.go"
     stdin_open: true
     tty: true
@@ -20,7 +20,7 @@ services:
     platform: linux/x86_64 # for M1 chip
     image: mysql:8.0
     container_name: db-container
-    # env_file: .env
+  　env_file: .env
     environment:
       MYSQL_ROOT_PASSWORD: ${SAMPLE_BLOG_DB_PASS:-default}
       MYSQL_DATABASE: sample_blog
@@ -37,7 +37,7 @@ services:
     platform: linux/x86_64 # for M1 chip
     image: mysql:8.0
     container_name: db-test-container
-    # env_file: .env
+    env_file: .env
     environment:
       MYSQL_ROOT_PASSWORD: test_password
       MYSQL_DATABASE: sample_blog_test

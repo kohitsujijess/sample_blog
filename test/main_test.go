@@ -85,25 +85,17 @@ func TestSave(t *testing.T) {
 	t.Run(
 		"Save entry",
 		func(t *testing.T) {
-			data := &Entry{
-				ID:          "qwertyuiop",
-				Title:       "first test entry",
-				Description: "first test entry",
-				Body:        "first test entry by test blogger",
-			}
+			entry := &Entry{}
+			result := db.Last(&entry)
+			originalEntry = entry
 
-			result := db.Create(data)
-			if result.Error != nil {
-				t.Error(result.Error)
-			}
+			entry.Title = "updated entry"
+			entry.Description = "updated entry"
+			entry.Body = "updated entry"
+			db.Save(&entry)
 
-			addedData := &Entry{}
-			resultData := db.Last(&addedData)
-			if resultData.Error != nil {
-				t.Error(resultData.Error)
-			}
-			if addedData.Title != data.Title {
-				t.Errorf("expected: %s, addedData: %s", data.ID, addedData.Title)
+			if entry.Title == originalEntry.Title {
+				t.Errorf("expected: %s, got: %s", entry.Title, originalEntry.Title)
 			}
 		},
 	)

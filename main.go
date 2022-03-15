@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bamzi/jobrunner"
-
 	"github.com/kohitsujijess/sample_blog/blog_db"
 	"github.com/kohitsujijess/sample_blog/job"
 	"github.com/kohitsujijess/sample_blog/models"
@@ -30,8 +28,10 @@ func main() {
 	fmt.Println(db)
 	db.AutoMigrate(&models.Entry{})
 
+	/**
 	jobrunner.Start()
 	jobrunner.Schedule("@every 5m", GetEntries{})
+	*/
 
 	e := router.Init()
 	e.Start(":1323")

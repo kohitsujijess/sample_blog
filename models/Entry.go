@@ -24,3 +24,15 @@ func SelectEntryWithId(id string, db *gorm.DB) (Entry, error) {
 	}
 	return entry, nil
 }
+
+func SelectEntries(db *gorm.DB, limit, offset int) ([]Entry, error) {
+	var entries []Entry
+	if limit == 0 {
+		limit = 40
+	}
+	result := db.Limit(limit).Offset(offset).Find(&entries)
+	if result.Error == gorm.ErrRecordNotFound {
+		return entries, fmt.Errorf("SelectEntries ErrRecordNotFound")
+	}
+	return entries, nil
+}
