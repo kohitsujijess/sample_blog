@@ -1,10 +1,10 @@
-version: '2'
+version: '3.8'
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file: .env
+    # env_file: .env
     command: /bin/sh -c "go run main.go"
     stdin_open: true
     tty: true
@@ -13,13 +13,14 @@ services:
     ports:
       - 1323:1323
     depends_on:
-      - "db"
+      - db
+      - test_db
   db:
     build: ./db/
     platform: linux/x86_64 # for M1 chip
     image: mysql:8.0
     container_name: db-container
-    env_file: .env
+    # env_file: .env
     environment:
       MYSQL_ROOT_PASSWORD: ${SAMPLE_BLOG_DB_PASS:-default}
       MYSQL_DATABASE: sample_blog
@@ -28,11 +29,29 @@ services:
       TZ: 'Asia/Tokyo'
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - ./db/init:/docker-entrypoint-initdb.d
       - db-data:/var/lib/mysql
     ports:
       - 3306:3306
+  test_db:
+    build: ./db_test/
+    platform: linux/x86_64 # for M1 chip
+    image: mysql:8.0
+    container_name: db-test-container
+    # env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: test_password
+      MYSQL_DATABASE: sample_blog_test
+      MYSQL_USER: ${SAMPLE_BLOG_DB_USER:-default}
+      MYSQL_PASSWORD: ${SAMPLE_BLOG_DB_PASS:-default}
+      TZ: 'Asia/Tokyo'
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-test-data:/var/lib/mysql
+    ports:
+      - 3307:3307
 
 volumes:
   db-data:
+    driver: local
+  db-test-data:
     driver: local

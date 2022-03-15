@@ -1,13 +1,12 @@
-package test
+package dockertest_test
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/ory/dockertest"
+	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -21,88 +20,71 @@ type Entry struct {
 	UpdatedAt   time.Time
 }
 
-func createContainer() (*dockertest.Resource, *dockertest.Pool) {
-	pwd, _ := os.Getwd()
-
-	pool, err := dockertest.NewPool("")
-	pool.MaxWait = time.Minute * 2
+func ConnectToTestDB() (*gorm.DB, error) {
+	user := os.Getenv("SAMPLE_BLOG_DB_USER")
+	pass := os.Getenv("SAMPLE_BLOG_DB_PASS")
+	protocol := "tcp(db-test-container)"
+	dbName := "sample_blog_test"
+	dataSourceName := user + ":" + pass + "@" + protocol + "/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	count := 0
 	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	runOptions := &dockertest.RunOptions{
-		Repository: "mysql",
-		Tag:        "8.0",
-		Env: []string{
-			"MYSQL_ROOT_PASSWORD=test_blog_echo",
-		},
-		Mounts: []string{
-			pwd + "/my.cnf:/etc/mysql/my.cnf",                            // MySQLの設定ファイル
-			pwd + "/entries.sql:/docker-entrypoint-initdb.d/entries.sql", // コンテナ起動時に実行したいSQL
-		},
-		Cmd: []string{
-			"mysqld",
-			"--character-set-server=utf8mb4",
-			"--collation-server=utf8mb4_unicode_ci",
-		},
-	}
-
-	resource, err := pool.RunWithOptions(runOptions)
-	if err != nil {
-		log.Fatalf("Could not start resource: %s", err)
-	}
-
-	return resource, pool
-}
-
-func closeContainer(resource *dockertest.Resource, pool *dockertest.Pool) {
-	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge resource: %s", err)
-	}
-}
-
-func connectToTestDB(resource *dockertest.Resource, pool *dockertest.Pool) *gorm.DB {
-	var db *gorm.DB
-	if err := pool.Retry(func() error {
-		var e error
-		time.Sleep(time.Second * 100)
-
-		user := "test_blogger"
-		pass := "test_blog_echo"
-		protocol := "(localhost:" + resource.GetPort("3306/tcp") + ")"
-		dbName := "sample_blog_test"
-		dataSourceName := user + ":" + pass + "@" + protocol + "/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local"
-		db, e = gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-
-		count := 0
-		if e != nil {
-			for {
-				if e == nil {
-					break
-				}
-				time.Sleep(time.Second)
-				count++
-				if count > 500 {
-					fmt.Println("ERROR")
-					return e
-				}
-				db, e = gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+		for {
+			if err == nil {
+				break
 			}
+			time.Sleep(time.Second)
+			count++
+			if count > 120 {
+				fmt.Println("failed to connect to test DB:", err)
+			}
+			db, err = gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
 		}
-		return nil
-	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+	} else {
+		fmt.Println("connect to test DB using gorm")
 	}
-	return db
+	db.AutoMigrate(&Entry{})
+	return db, err
 }
 
-func TestCreateWithDB(t *testing.T) {
+func TestCreate(t *testing.T) {
+	db, _ := ConnectToTestDB()
+	client, _ := db.DB()
+	defer client.Close()
 	t.Run(
 		"Add new entry",
 		func(t *testing.T) {
-			resource, pool := createContainer()
-			defer closeContainer(resource, pool)
-			db := connectToTestDB(resource, pool)
+			data := &Entry{
+				ID:          "qwertyuiop",
+				Title:       "first test entry",
+				Description: "first test entry",
+				Body:        "first test entry by test blogger",
+			}
+
+			result := db.Create(data)
+			if result.Error != nil {
+				t.Error(result.Error)
+			}
+
+			addedData := &Entry{}
+			resultData := db.Last(&addedData)
+			if resultData.Error != nil {
+				t.Error(resultData.Error)
+			}
+			if addedData.Title != data.Title {
+				t.Errorf("expected: %s, addedData: %s", data.ID, addedData.Title)
+			}
+		},
+	)
+}
+
+func TestSave(t *testing.T) {
+	db, _ := ConnectToTestDB()
+	client, _ := db.DB()
+	defer client.Close()
+	t.Run(
+		"Save entry",
+		func(t *testing.T) {
 			data := &Entry{
 				ID:          "qwertyuiop",
 				Title:       "first test entry",

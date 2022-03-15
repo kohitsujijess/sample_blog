@@ -17,7 +17,7 @@ func Init() *echo.Echo {
 		return c.String(http.StatusOK, "Entries of sample blog")
 	})
 	e.GET("/entries_list", controller.GetEntryList)
-	e.GET("/entries/:uuid", controller.GetEntryByUuId)
+	e.GET("/entries/:id", controller.GetEntryById)
 	e.POST("/authenticate", controller.Authenticate)
 	r := e.Group("/restricted")
 	config := middleware.JWTConfig{
