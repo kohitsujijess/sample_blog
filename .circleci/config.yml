@@ -6,17 +6,11 @@ version: 2.1
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
   build:
-    machine:
-      image: cimg/base:stable
-    working_directory: ~/repo
+    docker:
+      - image: cimg/base:2022.03
     steps:
       - checkout
-      - run:
-          name: install docker-compose
-          command: |
-            curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
-            chmod +x ~/docker-compose
-            sudo mv ~/docker-compose /usr/local/bin/docker-compose
+      - run: sudo apt-get update 
       - run:
           name: docker-compose up
           command: |

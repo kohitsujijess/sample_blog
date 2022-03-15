@@ -36,3 +36,13 @@ func SelectEntries(db *gorm.DB, limit, offset int) ([]Entry, error) {
 	}
 	return entries, nil
 }
+
+func AddOrUpdateEntry(db *gorm.DB, entry Entry) {
+	resultData := Entry{}
+	result := db.First(&resultData, "id = ?", entry.ID)
+	if result.Error == gorm.ErrRecordNotFound {
+		db.Create(&entry)
+	} else {
+		db.Save(&entry)
+	}
+}
