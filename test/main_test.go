@@ -88,7 +88,7 @@ func TestSave(t *testing.T) {
 		func(t *testing.T) {
 			entry := &Entry{}
 			db.Last(&entry)
-			originalEntry = entry
+			originalEntry := entry
 
 			entry.Title = "updated entry"
 			entry.Description = "updated entry"
@@ -115,16 +115,9 @@ func TestSelectEntryWithId(t *testing.T) {
 				Description: "test entry description",
 				Body:        "test entry body",
 			}
-			currentTime := time.Now()
-			db.Exec("INSERT INTO entries(id, title, description, body, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-				data.ID, data.Title, data.Description, data.Body, currentTime, currentTime)
-			var id *string
-			err := db.QueryRow("SELECT LAST_INSERT_ID() FROM entries").Scan(&id)
-			if err != nil {
-				t.Error(err.Error())
-			}
 
-			resultData, err := SelectEntryWithId(*id, db)
+			db.Create(&data)
+			resultData, err := models.SelectEntryWithId(data.ID, db)
 			if err != nil {
 				t.Error(err.Error())
 			}
@@ -136,6 +129,7 @@ func TestSelectEntryWithId(t *testing.T) {
 	)
 }
 
+/**
 func TestAddOrUpdateEntry(t *testing.T) {
 	db, _ := ConnectToTestDB()
 	client, _ := db.DB()
@@ -149,27 +143,25 @@ func TestAddOrUpdateEntry(t *testing.T) {
 				Description: "test entry description",
 				Body:        "test entry body",
 			}
-			currentTime := time.Now()
-			db.Exec("INSERT INTO entries(id, title, description, body, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-				data.ID, data.Title, data.Description, data.Body, currentTime, currentTime)
-
-			entry := &Entry{
+			db.Create(&data)
+			entryData := models.Entry{
 				ID:          "zxcvbnm",
 				Title:       "updated entry title",
 				Description: "updated entry description",
 				Body:        "updated entry body",
 			}
-			models.AddOrUpdateEntry(db, entry)
+			models.AddOrUpdateEntry(db, entryData)
 
 			resultData := Entry{}
-			result := db.First(&resultData, "id = ?", entry.ID)
-			if err != nil {
-				t.Error(err.Error())
+			result := db.First(&resultData, "id = ?", entryData.ID)
+			if result.Error != nil {
+				t.Error(result.Error)
 			}
 
-			if entry.Title != resultData.Title {
-				t.Errorf("expected: %s, got: %s", entry.Title, resultData.Title)
+			if entryData.Title != resultData.Title {
+				t.Errorf("expected: %s, got: %s", entryData.Title, resultData.Title)
 			}
 		},
 	)
 }
+*/
