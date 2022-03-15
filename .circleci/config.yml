@@ -10,6 +10,7 @@ jobs:
       - image: cimg/base:2022.03
     steps:
       - checkout
+      - setup_remote_docker
       - run: sudo apt-get update 
       - run:
           name: docker-compose up
