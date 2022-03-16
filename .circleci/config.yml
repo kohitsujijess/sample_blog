@@ -15,17 +15,19 @@ jobs:
           docker_layer_caching: true
       - run: sudo apt-get update 
       - run:
-          name: docker-compose build
-          command: docker-compose build
+          name: docker compose build
+          command: docker compose build
       - run:
-          name: docker-compose up
-          command: docker-compose up -d
+          name: docker compose up
+          command: docker compose up -d
       - run:
           name: test
-          command: docker-compose exec app go test -v
+          command: |
+            docker compose ps
+      # docker-compose run app go test -v
       - run:
-          name: docker-compose down
-          command: docker-compose down
+          name: docker compose down
+          command: docker compose down
 
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
