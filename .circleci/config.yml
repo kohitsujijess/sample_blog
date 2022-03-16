@@ -21,7 +21,7 @@ jobs:
             docker-compose up -d
       - run:
           name: test
-          command: docker-compose run app go test -v test/main_test.go
+          command: docker-compose run app go test -v app/test/main_test.go
       - run:
           name: docker-compose down
           command: docker-compose down
