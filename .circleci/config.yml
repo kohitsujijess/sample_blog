@@ -22,10 +22,7 @@ jobs:
           command: docker-compose up -d
       - run:
           name: test
-          command: |
-            pwd
-            ls -la
-            docker-compose run app go test -v
+          command: docker-compose exec app go test -v
       - run:
           name: docker-compose down
           command: docker-compose down
