@@ -46,11 +46,3 @@ func Authenticate(c echo.Context) error {
 		"token": t,
 	})
 }
-
-func Restricted(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*JwtCustomClaims)
-	name := claims.Name
-
-	return c.String(http.StatusOK, "Welcome "+name+"!")
-}

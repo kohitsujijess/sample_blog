@@ -1,4 +1,4 @@
-package dockertest_test
+package test
 
 import (
 	"fmt"
@@ -11,15 +11,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
-
-type Entry struct {
-	ID          string
-	Title       string
-	Description string
-	Body        string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-}
 
 func ConnectToTestDB() (*gorm.DB, error) {
 	user := os.Getenv("SAMPLE_BLOG_DB_USER")
@@ -44,7 +35,7 @@ func ConnectToTestDB() (*gorm.DB, error) {
 	} else {
 		fmt.Println("connect to test DB using gorm")
 	}
-	db.AutoMigrate(&Entry{})
+	db.AutoMigrate(&models.Entry{})
 	return db, err
 }
 
@@ -55,20 +46,27 @@ func TestCreate(t *testing.T) {
 	t.Run(
 		"Add new entry",
 		func(t *testing.T) {
-			data := &Entry{
+			data := models.Entry{
 				ID:          "qwertyuiop",
 				Title:       "first test entry",
 				Description: "first test entry",
 				Body:        "first test entry by test blogger",
 			}
 
-			result := db.Create(data)
+			result := db.Create(&data)
 			if result.Error != nil {
 				t.Error(result.Error)
 			}
+			t.Cleanup(func() {
+				db.Delete(&data)
+			})
 
-			addedData := &Entry{}
+			addedData := &models.Entry{}
 			resultData := db.Last(&addedData)
+			t.Cleanup(func() {
+				db.Delete(&addedData)
+			})
+
 			if resultData.Error != nil {
 				t.Error(resultData.Error)
 			}
@@ -86,17 +84,33 @@ func TestSave(t *testing.T) {
 	t.Run(
 		"Save entry",
 		func(t *testing.T) {
-			entry := &Entry{}
-			db.Last(&entry)
-			originalEntry := entry
+			id := "qwertyuiop"
+			data := models.Entry{
+				ID:          id,
+				Title:       "first test entry",
+				Description: "first test entry",
+				Body:        "first test entry by test blogger",
+			}
+			result := db.Create(&data)
+			if result.Error != nil {
+				t.Error(result.Error)
+			}
+			t.Cleanup(func() {
+				db.Delete(&data)
+			})
 
+			entry := &models.Entry{}
+			db.First(&entry, "id = ?", id)
 			entry.Title = "updated entry"
 			entry.Description = "updated entry"
 			entry.Body = "updated entry"
 			db.Save(&entry)
+			t.Cleanup(func() {
+				db.Delete(&entry)
+			})
 
-			if entry.Title == originalEntry.Title {
-				t.Errorf("expected: %s, got: %s", entry.Title, originalEntry.Title)
+			if entry.Title == data.Title {
+				t.Errorf("expected: %s, got: %s", entry.Title, data.Title)
 			}
 		},
 	)
@@ -109,18 +123,24 @@ func TestSelectEntryWithId(t *testing.T) {
 	t.Run(
 		"Select entry",
 		func(t *testing.T) {
-			data := &Entry{
+			data := &models.Entry{
 				ID:          "asdfghjkl",
 				Title:       "test entry title",
 				Description: "test entry description",
 				Body:        "test entry body",
 			}
-
 			db.Create(&data)
+			t.Cleanup(func() {
+				db.Delete(&data)
+			})
+
 			resultData, err := models.SelectEntryWithId(data.ID, db)
 			if err != nil {
 				t.Error(err.Error())
 			}
+			t.Cleanup(func() {
+				db.Delete(&resultData)
+			})
 
 			if data.Title != resultData.Title {
 				t.Errorf("expected: %s, got: %s", data.Title, resultData.Title)
@@ -129,7 +149,6 @@ func TestSelectEntryWithId(t *testing.T) {
 	)
 }
 
-/**
 func TestAddOrUpdateEntry(t *testing.T) {
 	db, _ := ConnectToTestDB()
 	client, _ := db.DB()
@@ -137,26 +156,33 @@ func TestAddOrUpdateEntry(t *testing.T) {
 	t.Run(
 		"Insert or update entry",
 		func(t *testing.T) {
-			data := &Entry{
+			data := models.Entry{
 				ID:          "zxcvbnm",
 				Title:       "test entry title",
 				Description: "test entry description",
 				Body:        "test entry body",
 			}
 			db.Create(&data)
+			t.Cleanup(func() {
+				db.Delete(&data)
+			})
+
 			entryData := models.Entry{
-				ID:          "zxcvbnm",
+				ID:          data.ID,
 				Title:       "updated entry title",
 				Description: "updated entry description",
 				Body:        "updated entry body",
 			}
 			models.AddOrUpdateEntry(db, entryData)
 
-			resultData := Entry{}
+			resultData := models.Entry{}
 			result := db.First(&resultData, "id = ?", entryData.ID)
 			if result.Error != nil {
 				t.Error(result.Error)
 			}
+			t.Cleanup(func() {
+				db.Delete(&resultData)
+			})
 
 			if entryData.Title != resultData.Title {
 				t.Errorf("expected: %s, got: %s", entryData.Title, resultData.Title)
@@ -164,4 +190,3 @@ func TestAddOrUpdateEntry(t *testing.T) {
 		},
 	)
 }
-*/

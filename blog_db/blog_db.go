@@ -29,8 +29,6 @@ func Connect() (*gorm.DB, error) {
 			}
 			db, err = gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
 		}
-	} else {
-		fmt.Println("connect to DB using gorm")
 	}
 	return db, err
 }
