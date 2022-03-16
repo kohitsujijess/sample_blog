@@ -18,6 +18,8 @@ jobs:
           name: docker-compose up
           command: |
             set -x
+            go mod init github.com/kohitsujijess/sample_blog
+            go mod tidy
             docker-compose up -d
       - run:
           name: test
