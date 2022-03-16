@@ -16,8 +16,6 @@ func Init() *echo.Echo {
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Entries of sample blog")
 	})
-	e.GET("/entries_list", controller.GetEntryList)
-	e.GET("/entries/:id", controller.GetEntryById)
 	e.POST("/authenticate", controller.Authenticate)
 	r := e.Group("/restricted")
 	config := middleware.JWTConfig{
@@ -25,7 +23,8 @@ func Init() *echo.Echo {
 		SigningKey: []byte("secret"),
 	}
 	r.Use(middleware.JWTWithConfig(config))
-	r.GET("/welcome", controller.Restricted)
+	r.GET("/entries_list", controller.GetEntryList)
+	r.GET("/entries/:id", controller.GetEntryById)
 
 	return e
 }
