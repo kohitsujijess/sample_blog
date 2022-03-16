@@ -15,11 +15,12 @@ jobs:
           docker_layer_caching: true
       - run: sudo apt-get update 
       - run:
+          name: docker-compose build
+          command: docker-compose build
+      - run:
           name: docker-compose up
           command: |
             set -x
-            go mod init github.com/kohitsujijess/sample_blog
-            go mod tidy
             docker-compose up -d
       - run:
           name: test
