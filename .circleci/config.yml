@@ -10,7 +10,9 @@ jobs:
       - image: cimg/base:2022.03
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.13
+          docker_layer_caching: true
       - run: sudo apt-get update 
       - run:
           name: docker compose build
