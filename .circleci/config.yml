@@ -19,9 +19,7 @@ jobs:
           command: docker compose build
       - run:
           name: docker compose up
-          command: |
-            docker compose up -d
-            docker-compose logs -f app
+          command: docker compose up -d
       - run:
           name: test
           command: |
