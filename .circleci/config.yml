@@ -11,7 +11,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.11
+          # version: 20.10.11
           # docker_layer_caching: true
       - run: sudo apt-get update 
       - run:
@@ -24,7 +24,7 @@ jobs:
           name: test
           command: |
             docker compose ps
-      # docker-compose run app go test -v
+            docker-compose run app go test -v
       - run:
           name: docker compose down
           command: docker compose down
