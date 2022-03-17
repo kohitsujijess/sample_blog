@@ -10,7 +10,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - .:/go/src/app
+      - .:/app
     ports:
       - 1323:1323
     depends_on:
