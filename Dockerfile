@@ -2,5 +2,6 @@ FROM golang:1.17-alpine
 RUN mkdir /go/src/app
 WORKDIR /go/src/app
 RUN apk add --no-cache gcc musl-dev
-ADD . /go/src/app
-RUN go mod tidy
+COPY go.mod go.sum ./
+RUN go mod download
+COPY ./main.go  ./
