@@ -13,18 +13,22 @@ jobs:
       - setup_remote_docker:
           version: 20.10.7
           docker_layer_caching: true
-      - run: sudo apt-get update 
+      - run:
+          command: |
+            sudo add-apt-repository -y ppa:longsleep/golang-backports
+            sudo apt update -y 
+            sudo apt install -y golang-go
       - run:
           name: docker compose build
-          command: docker compose build --no-cache
+          command: docker compose -f docker-compose-test.yml build
       - run:
           name: docker compose up
-          command: docker compose up -d
+          command: docker compose -f docker-compose-test.yml up -d
       - run:
           name: test
           command: |
             docker compose ps
-            docker-compose exec app go test -v
+            docker compose exec app go test -v
       - run:
           name: docker compose down
           command: docker compose down

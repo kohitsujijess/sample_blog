@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -13,8 +12,8 @@ import (
 )
 
 func ConnectToTestDB() (*gorm.DB, error) {
-	user := os.Getenv("SAMPLE_BLOG_DB_USER")
-	pass := os.Getenv("SAMPLE_BLOG_DB_PASS")
+	user := "test_blogger"
+	pass := "tset_reggolb"
 	protocol := "tcp(db-test-container)"
 	dbName := "sample_blog_test"
 	dataSourceName := user + ":" + pass + "@" + protocol + "/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local"

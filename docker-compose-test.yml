@@ -13,25 +13,25 @@ services:
     ports:
       - 1323:1323
     depends_on:
-      - db
-  db:
-    build: ./db/
+      - test_db
+  test_db:
+    build: ./db_test/
     platform: linux/x86_64 # for M1 chip
     image: mysql:8.0
-    container_name: db-container
+    container_name: db-test-container
     env_file: .env
     environment:
-      MYSQL_ROOT_PASSWORD: ${SAMPLE_BLOG_DB_PASS:-default}
-      MYSQL_DATABASE: sample_blog
-      MYSQL_USER: ${SAMPLE_BLOG_DB_USER:-default}
-      MYSQL_PASSWORD: ${SAMPLE_BLOG_DB_PASS:-default}
+      MYSQL_ROOT_PASSWORD: test_password
+      MYSQL_DATABASE: sample_blog_test
+      MYSQL_USER: test_blogger
+      MYSQL_PASSWORD: tset_reggolb
       TZ: 'Asia/Tokyo'
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - db-data:/var/lib/mysql
+      - db-test-data:/var/lib/mysql
     ports:
-      - 3306:3306
+      - 3307:3307
 
 volumes:
-  db-data:
+  db-test-data:
     driver: local
