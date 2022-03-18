@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -21,9 +22,9 @@ type JwtCustomClaims struct {
 func Authenticate(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
-
+	fmt.Println(username)
 	if username != os.Getenv("USER_NAME") || password != os.Getenv("BLOGGER_PW") {
-		return echo.ErrUnauthorized
+		return echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized")
 	}
 
 	claims := &JwtCustomClaims{

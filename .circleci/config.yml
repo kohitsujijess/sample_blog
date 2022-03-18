@@ -8,6 +8,10 @@ jobs:
   blog_test:
     docker:
       - image: cimg/go:1.18
+        environment:
+          USER_NAME: test_blogger
+          BLOGGER_PW: password_tset_reggolb
+          TEST_DB: localhost
       - image: cimg/mysql:8.0
         environment:
           MYSQL_ROOT_PASSWORD: test_password

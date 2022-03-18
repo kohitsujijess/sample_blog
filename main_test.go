@@ -2,11 +2,18 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/kohitsujijess/sample_blog/controller"
 	"github.com/kohitsujijess/sample_blog/models"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -16,6 +23,7 @@ func ConnectToTestDB() (*gorm.DB, error) {
 	pass := "tset_reggolb"
 	protocol := "tcp(db-test-container)"
 	protocol = "tcp(localhost)"
+	protocol = "tcp(" + os.Getenv("TEST_DB") + ")"
 	dbName := "sample_blog_test"
 	dataSourceName := user + ":" + pass + "@" + protocol + "/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
@@ -116,6 +124,51 @@ func TestSave(t *testing.T) {
 	)
 }
 
+func TestSelectEntries(t *testing.T) {
+	db, _ := ConnectToTestDB()
+	client, _ := db.DB()
+	defer client.Close()
+	t.Run(
+		"Select entry",
+		func(t *testing.T) {
+			data1 := &models.Entry{
+				ID:          "1qaz2wsx",
+				Title:       "test entry",
+				Description: "test entry",
+				Body:        "test entry",
+			}
+			db.Create(&data1)
+			t.Cleanup(func() {
+				db.Delete(&data1)
+			})
+			data2 := &models.Entry{
+				ID:          "3edc4rfv",
+				Title:       "test entry",
+				Description: "test entry",
+				Body:        "test entry",
+			}
+			db.Create(&data2)
+			t.Cleanup(func() {
+				db.Delete(&data2)
+			})
+
+			entries, err := models.SelectEntries(db, 2, 0)
+			if err != nil {
+				t.Error(err.Error())
+			}
+			if len(entries) != 2 {
+				t.Errorf("expected: two entries, got: %d entries", len(entries))
+			}
+			if entries[0].ID != data2.ID {
+				t.Errorf("expected: %s, got: %s", data2.ID, entries[0].ID)
+			}
+			if entries[1].ID != data1.ID {
+				t.Errorf("expected: %s, got: %s", data1.ID, entries[1].ID)
+			}
+		},
+	)
+}
+
 func TestSelectEntryWithId(t *testing.T) {
 	db, _ := ConnectToTestDB()
 	client, _ := db.DB()
@@ -189,4 +242,13 @@ func TestAddOrUpdateEntry(t *testing.T) {
 			}
 		},
 	)
+}
+
+func TestAuthenticate(t *testing.T) {
+	e := echo.New()
+	userJSON := `{"username":"wrong_value","password":"wrong_value"}`
+	req := httptest.NewRequest(http.MethodPost, "/authenticate", strings.NewReader(userJSON))
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	assert.Error(t, controller.Authenticate(c))
 }
