@@ -5,36 +5,27 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build:
+  blog_test:
     docker:
-      - image: cimg/base:2022.03
+      - image: cimg/go:1.18
+      - image: cimg/mysql:8.0
+        environment:
+          MYSQL_ROOT_PASSWORD: test_password
+          MYSQL_USER: test_blogger
+          MYSQL_PASSWORD: tset_reggolb
+          MYSQL_DATABASE: sample_blog_test
+        command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 20.10.7
-          docker_layer_caching: true
       - run:
-          command: |
-            sudo add-apt-repository -y ppa:longsleep/golang-backports
-            sudo apt update -y 
-            sudo apt install -y golang-go
+          name: Waiting for mysql to be ready
+          command: dockerize -wait tcp://localhost:3306 -timeout 4m
       - run:
-          name: docker compose build
-          command: docker compose -f docker-compose-test.yml build
-      - run:
-          name: docker compose up
-          command: docker compose -f docker-compose-test.yml up -d
-      - run:
-          name: test
-          command: |
-            docker compose ps
-            docker compose exec app go test -v
-      - run:
-          name: docker compose down
-          command: docker compose down
+          name: Go test
+          command: go test -v
 
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   build-workflow:
     jobs:
-      - build
+      - blog_test

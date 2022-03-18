@@ -15,6 +15,7 @@ func ConnectToTestDB() (*gorm.DB, error) {
 	user := "test_blogger"
 	pass := "tset_reggolb"
 	protocol := "tcp(db-test-container)"
+	protocol = "tcp(localhost)"
 	dbName := "sample_blog_test"
 	dataSourceName := user + ":" + pass + "@" + protocol + "/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
