@@ -24,6 +24,15 @@ jobs:
       - run:
           name: Waiting for mysql to be ready
           command: dockerize -wait tcp://localhost:3306 -timeout 4m
+      # cimg/go:1.18で使えるようになるまでコメントアウト
+      # - run:
+      #     name: Staticcheck
+      #     command: |
+      #       go install honnef.co/go/tools/cmd/staticcheck@latest
+      #       staticcheck ./...
+      - run:
+          name: Go vet
+          command: go vet
       - run:
           name: Go test
           command: go test -v

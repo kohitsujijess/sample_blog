@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/kohitsujijess/sample_blog/controller"
+	"github.com/kohitsujijess/sample_blog/job"
 	"github.com/kohitsujijess/sample_blog/models"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -167,6 +168,18 @@ func TestSelectEntries(t *testing.T) {
 			}
 		},
 	)
+	t.Run(
+		"No entries",
+		func(t *testing.T) {
+			entries, err := models.SelectEntries(db, 0, 0)
+			if len(entries) != 0 {
+				t.Errorf("expected: zero entries, got: %d entries", len(entries))
+			}
+			if err != nil {
+				t.Errorf("expected: nil, got: %s", err)
+			}
+		},
+	)
 }
 
 func TestSelectEntryWithId(t *testing.T) {
@@ -200,6 +213,27 @@ func TestSelectEntryWithId(t *testing.T) {
 			}
 		},
 	)
+	t.Run(
+		"Record is not found",
+		func(t *testing.T) {
+			data := &models.Entry{
+				ID:          "aadfghjkl",
+				Title:       "test entry title",
+				Description: "test entry description",
+				Body:        "test entry body",
+			}
+			db.Create(&data)
+			t.Cleanup(func() {
+				db.Delete(&data)
+			})
+
+			_, err := models.SelectEntryWithId("bbdfghjkl", db)
+			if err == nil {
+				t.Errorf("expected: error, got: nil")
+			}
+		},
+	)
+
 }
 
 func TestAddOrUpdateEntry(t *testing.T) {
@@ -233,9 +267,6 @@ func TestAddOrUpdateEntry(t *testing.T) {
 			if result.Error != nil {
 				t.Error(result.Error)
 			}
-			t.Cleanup(func() {
-				db.Delete(&resultData)
-			})
 
 			if entryData.Title != resultData.Title {
 				t.Errorf("expected: %s, got: %s", entryData.Title, resultData.Title)
@@ -251,4 +282,11 @@ func TestAuthenticate(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	assert.Error(t, controller.Authenticate(c))
+}
+func TestGetRequest(t *testing.T) {
+	url := "https://contentful.com/spaces/"
+	result := job.GetRequest(url)
+	if result == nil {
+		t.Errorf("expected: error, got: nil")
+	}
 }

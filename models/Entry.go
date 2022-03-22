@@ -31,7 +31,7 @@ func SelectEntries(db *gorm.DB, limit, offset int) ([]Entry, error) {
 		limit = 40
 	}
 	result := db.Order("id desc").Limit(limit).Offset(offset).Find(&entries)
-	if result.Error == gorm.ErrRecordNotFound {
+	if result.Error != nil {
 		return entries, fmt.Errorf("SelectEntries ErrRecordNotFound")
 	}
 	return entries, nil
