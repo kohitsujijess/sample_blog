@@ -233,7 +233,6 @@ func TestSelectEntryWithId(t *testing.T) {
 			}
 		},
 	)
-
 }
 
 func TestAddOrUpdateEntry(t *testing.T) {
@@ -261,6 +260,9 @@ func TestAddOrUpdateEntry(t *testing.T) {
 				Body:        "updated entry body",
 			}
 			models.AddOrUpdateEntry(db, entryData)
+			t.Cleanup(func() {
+				db.Delete(&entryData)
+			})
 
 			resultData := models.Entry{}
 			result := db.First(&resultData, "id = ?", entryData.ID)
@@ -273,20 +275,64 @@ func TestAddOrUpdateEntry(t *testing.T) {
 			}
 		},
 	)
+	t.Run(
+		"No data is created nor updated",
+		func(t *testing.T) {
+			data := models.Entry{
+				ID:          "mlpnkobji",
+				Title:       "test entry title",
+				Description: "test entry description",
+				Body:        "test entry body",
+			}
+			db.Create(&data)
+			t.Cleanup(func() {
+				db.Delete(&data)
+			})
+			var entries []models.Entry
+			result := db.Order("id desc").Find(&entries)
+			if result.Error != nil {
+				t.Error(result.Error)
+			}
+			entryData := models.Entry{
+				ID:   "",
+				Body: "updated entry body",
+			}
+			models.AddOrUpdateEntry(db, entryData)
+
+			var entries2 []models.Entry
+			result2 := db.Order("id desc").Find(&entries2)
+			if result2.Error != nil {
+				t.Error(result.Error)
+			}
+			if len(entries) != len(entries2) {
+				t.Errorf("expected: %d, got: %d", len(entries), len(entries2))
+			}
+		},
+	)
 }
 
 func TestAuthenticate(t *testing.T) {
-	e := echo.New()
-	userJSON := `{"username":"wrong_value","password":"wrong_value"}`
-	req := httptest.NewRequest(http.MethodPost, "/authenticate", strings.NewReader(userJSON))
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	assert.Error(t, controller.Authenticate(c))
+	t.Run(
+		"With invalid parameters",
+		func(t *testing.T) {
+			e := echo.New()
+			userJSON := `{"username":"wrong_value","password":"wrong_value"}`
+			req := httptest.NewRequest(http.MethodPost, "/authenticate", strings.NewReader(userJSON))
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			assert.Error(t, controller.Authenticate(c))
+		},
+	)
 }
 func TestGetRequest(t *testing.T) {
-	url := "https://contentful.com/spaces/"
-	result := job.GetRequest(url)
-	if result == nil {
-		t.Errorf("expected: error, got: nil")
-	}
+	t.Run(
+		"Url is not correct",
+		func(t *testing.T) {
+			url := "https://contentful.com/spaces/"
+			result := job.GetRequest(url)
+			if result == nil {
+				t.Errorf("expected: error, got: nil")
+			}
+		},
+	)
 }

@@ -8,7 +8,7 @@ import (
 )
 
 type Entry struct {
-	ID          string     `gorm:"primaryKey" json:"id"`
+	ID          string     `gorm:"primaryKey;unique;not null" json:"id"`
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	Body        string     `gorm:"type:text" json:"body"`
@@ -38,11 +38,13 @@ func SelectEntries(db *gorm.DB, limit, offset int) ([]Entry, error) {
 }
 
 func AddOrUpdateEntry(db *gorm.DB, entry Entry) {
-	resultData := Entry{}
-	result := db.First(&resultData, "id = ?", entry.ID)
-	if result.Error == gorm.ErrRecordNotFound {
-		db.Create(&entry)
-	} else {
-		db.Save(&entry)
+	if entry.ID != "" {
+		resultData := Entry{}
+		result := db.First(&resultData, "id = ?", entry.ID)
+		if result.Error == gorm.ErrRecordNotFound {
+			db.Create(&entry)
+		} else {
+			db.Save(&entry)
+		}
 	}
 }
