@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/kohitsujijess/sample_blog/controller"
 	"github.com/kohitsujijess/sample_blog/job"
 	"github.com/kohitsujijess/sample_blog/models"
