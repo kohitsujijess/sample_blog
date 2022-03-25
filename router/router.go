@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/kohitsujijess/sample_blog/controller"
 
@@ -19,10 +20,10 @@ func Init() *echo.Echo {
 	e.POST("/authenticate", controller.Authenticate)
 	r := e.Group("/restricted")
 	config := middleware.JWTConfig{
-		Claims:     &controller.JwtCustomClaims{},
-		SigningKey: []byte("secret"),
+		SigningKey: []byte(os.Getenv("SECRET_KEY")),
 	}
 	r.Use(middleware.JWTWithConfig(config))
+	r.GET("", controller.Welcome)
 	r.GET("/entries_list", controller.GetEntryList)
 	r.GET("/entries/:id", controller.GetEntryById)
 
