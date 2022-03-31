@@ -29,7 +29,9 @@ func main() {
 	} else {
 		fmt.Println("Connected to DB")
 	}
-	db.AutoMigrate(&models.Entry{})
+	db.AutoMigrate(&models.Entry{}, &models.User{})
+
+	db.Migrator().DropColumn(&models.User{}, "Code")
 
 	jobrunner.Start()
 	jobrunner.Schedule("@every 5m", GetEntries{})
