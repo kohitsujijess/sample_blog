@@ -3,16 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/bamzi/jobrunner"
+	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/kohitsujijess/sample_blog/blog_db"
 	"github.com/kohitsujijess/sample_blog/job"
 	"github.com/kohitsujijess/sample_blog/models"
 	"github.com/kohitsujijess/sample_blog/router"
+	"gorm.io/gorm"
 )
 
 type GetEntries struct {
@@ -29,7 +32,37 @@ func main() {
 	} else {
 		fmt.Println("Connected to DB")
 	}
-	db.AutoMigrate(&models.Entry{})
+	// db.AutoMigrate(&models.Entry{})
+
+	m := gormigrate.New(db, gormigrate.DefaultOptions, []*gormigrate.Migration{
+		{
+			ID: "202203311700",
+			Migrate: func(tx *gorm.DB) error {
+				return tx.AutoMigrate(&models.Author{})
+			},
+			Rollback: func(tx *gorm.DB) error {
+				return tx.Migrator().DropTable("authors")
+			},
+		},
+		{
+			ID: "202203311705",
+			Migrate: func(tx *gorm.DB) error {
+				db.Migrator().AddColumn(&models.Author{}, "Name")
+				db.Migrator().AddColumn(&models.Author{}, "Code")
+				db.Migrator().AddColumn(&models.Author{}, "Number")
+
+				return tx.AutoMigrate(&models.Author{})
+			},
+			Rollback: func(tx *gorm.DB) error {
+				return tx.Migrator().DropColumn(&models.Author{}, "Name")
+				return tx.Migrator().DropColumn(&models.Author{}, "Code")
+				return tx.Migrator().DropColumn(&models.Author{}, "Number")
+			},
+		},
+	})
+	if err = m.Migrate(); err != nil {
+		log.Fatalf("Could not migrate: %v", err)
+	}
 
 	jobrunner.Start()
 	jobrunner.Schedule("@every 5m", GetEntries{})
