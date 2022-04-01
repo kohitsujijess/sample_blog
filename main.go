@@ -8,19 +8,11 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/bamzi/jobrunner"
 	"github.com/kohitsujijess/sample_blog/blog_db"
 	"github.com/kohitsujijess/sample_blog/job"
 	"github.com/kohitsujijess/sample_blog/models"
 	"github.com/kohitsujijess/sample_blog/router"
 )
-
-type GetEntries struct {
-}
-
-func (e GetEntries) Run() {
-	job.GetEntriesFromAPI()
-}
 
 func main() {
 	db, err := blog_db.Connect()
@@ -31,9 +23,6 @@ func main() {
 	}
 	db.AutoMigrate(&models.Entry{})
 
-	jobrunner.Start()
-	jobrunner.Schedule("@every 5m", GetEntries{})
-
 	e := router.Init()
 
 	go func() {
@@ -41,6 +30,8 @@ func main() {
 			e.Logger.Fatal("shutting down the server")
 		}
 	}()
+
+	job.Start()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)

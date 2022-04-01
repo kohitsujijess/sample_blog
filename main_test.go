@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -316,7 +317,11 @@ func TestAuthenticate(t *testing.T) {
 		func(t *testing.T) {
 			e := echo.New()
 			userJSON := `{"username":"wrong_value","password":"wrong_value"}`
-			req := httptest.NewRequest(http.MethodPost, "/authenticate", strings.NewReader(userJSON))
+			fmt.Println(strings.NewReader(userJSON))
+
+			jsonData := []byte(`{"username": "wrong_value", "password": "wrong_value"}`)
+
+			req := httptest.NewRequest(http.MethodPost, "/authenticate", bytes.NewBuffer(jsonData))
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 			assert.Error(t, controller.Authenticate(c))
