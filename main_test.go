@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -316,12 +316,11 @@ func TestAuthenticate(t *testing.T) {
 		"With invalid parameters",
 		func(t *testing.T) {
 			e := echo.New()
-			userJSON := `{"username":"wrong_value","password":"wrong_value"}`
-			fmt.Println(strings.NewReader(userJSON))
-
-			jsonData := []byte(`{"username": "wrong_value", "password": "wrong_value"}`)
-
-			req := httptest.NewRequest(http.MethodPost, "/authenticate", bytes.NewBuffer(jsonData))
+			f := make(url.Values)
+			f.Set("username", "pppppppp")
+			f.Set("password", "qqqqqqqq")
+			req := httptest.NewRequest(http.MethodPost, "/authenticate", strings.NewReader(f.Encode()))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 			assert.Error(t, controller.Authenticate(c))
